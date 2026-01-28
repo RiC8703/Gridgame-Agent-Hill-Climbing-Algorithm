@@ -1,3 +1,8 @@
 /.DS_Store
 /.ipynb_checkpoints
 /hw1.pdf
+/__pycache__/
+/grid.txt
+/initial_grid.txt
+/shapes.txt
+/time.txt

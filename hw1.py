@@ -67,18 +67,34 @@ start = time.time()  # <- do not modify this.
 
 '''
 Local Search Algorithm: First choice hill climbing
+
+This implementation uses first choice hill climbing to solve the grid coloring problem.
+At each iteration, it generates a random move (position, shape, color) and evaluates the resulting state.
+If the new state has a better score, then the move is accepted; otherwise, it is undone.
+Restarts are performed if no improvement is found after a certain number of no_improvement_count.
 '''
 
 class Agent:
     def __init__(self, game):
+        # Intialize the agent with the game instance.
         self.game = game
 
     def evaluate_state(self, grid, placedShapes):
+        """
+        Objective function to evaluate the current state of grid.
+        Return a score based on:
+        - Number of colored boxes (higher is better)
+        - Number of violations (lower is better)
+        - Number of shapes used (lower is better)
+
+        """
         score = 0
-    
+
+        # reward colored boxes
         colored_boxes = (grid != -1).sum()
         score += colored_boxes * 10
-    
+
+        # count violations (adjacent boxes of same color)
         violations = 0
         for i in range(len(grid)):
             for j in range(len(grid[0])):
@@ -87,7 +103,8 @@ class Agent:
                         violations += 1
                     if i < len(grid) - 1 and grid[i][j] == grid[i + 1][j]:
                         violations += 1
-    
+
+        # penalize violations and number of shapes used
         score -= violations * 500
         score -= len(placedShapes) * 5
     
@@ -98,12 +115,14 @@ class Agent:
         target_shape = random.randint(0, 8)
         target_color = random.randint(0, 3)
 
+        # get current grid state and find empty boxes 
         _, _, _, grid, _, _, = self.game.execute("export")
         empty_boxes = np.argwhere(grid == -1)
 
         if len(empty_boxes) == 0:
             return None
 
+        # select an empty box randomly
         target_box = empty_boxes[random.randint(0, len(empty_boxes) - 1)]
         target_x, target_y = target_box[1], target_box[0]
 
@@ -131,30 +150,45 @@ class Agent:
             current_y -= 1
 
     def switch_to_shape(self, target_shape):
+        # switch brush to target shape
         _, currentShapeIndex, _, _, _, _ = self.game.execute("export")
         while currentShapeIndex != target_shape:
             self.game.execute("switchshape")
             _, currentShapeIndex, _, _, _, _ = self.game.execute("export")
 
     def switch_to_color(self, target_color): 
+        # switch brush to target color
         _, _, currentColorIndex, _, _, _ = self.game.execute("export")
         while currentColorIndex != target_color:
             self.game.execute("switchcolor")
             _, _, currentColorIndex, _, _, _ = self.game.execute("export")   
 
     def solve(self):
+        """
+        Implementation of local search algorithm.
+        Main solving function using first choice hill climbing with random restarts.
+        1. generate a random move. (position, shape, color)
+        2. navigate to position, switch to shape and color.
+        3. place the shape if possible.
+        4. evaluate the new state.
+        5. if the new state scire is better, keep the move or else undo it.
+        6. if no improvement after certin trys, restart from start.
+
+        """
         print("Starting solver...")
-        max_iterations = 10000
-        no_improvement_count = 0
+        max_iterations = 10000 # maximum number of trys before giving up.
+        no_improvement_count = 0 # counter for no improvements.
 
         for iteration in range(max_iterations):
             _, _, _, grid, placedShapes, done = self.game.execute("export")
             if done:
-                print(f"solved. Used{len(placedShapes)} shapes")
+                print(f"Solved! Used {len(placedShapes)} shapes")
                 return
             
+            # evaluate current state
             score_before = self.evaluate_state(grid, placedShapes)
 
+            # generate random move
             move = self.generate_random_placement()
             if move is None:
                 print("No empty boxes")
@@ -162,20 +196,24 @@ class Agent:
             
             target_x, target_y, target_shape, target_color = move
 
+            # execute tthe move
             self.navigate_to(target_x, target_y)
             self.switch_to_shape(target_shape)
             self.switch_to_color(target_color)
 
+            # get updated position after navigation
             shapePos, currentShapeIndex, _, grid, _, _ = self.game.execute("export")
 
+            # try placing the shape
             if self.game.canPlace(grid, self.game.shapes[currentShapeIndex], shapePos):
                 self.game.execute("place")
 
+                # get and evaluate new state
                 _, _, _, new_grid, new_placedShapes, new_done = self.game.execute("export")
                 done = new_done
-
                 score_after = self.evaluate_state(new_grid, new_placedShapes)
 
+                # first choice hill climbing: keep only if improvement
                 if score_after > score_before:
                     no_improvement_count = 0
                 else: 
@@ -184,7 +222,8 @@ class Agent:
                     no_improvement_count += 1
             else: 
                 no_improvement_count += 1
-            
+
+            # random restart if stuck
             if no_improvement_count >= 500:
                 while len(placedShapes) > 0:
                     self.game.execute("undo")
@@ -196,6 +235,11 @@ solver = Agent(game)
 print("calling solve...")
 solver.solve()
 print("solver finished.")
+
+# get final state to check if done
+shapePos, currentShapeIndex, currentColorIndex, grid, placedShapes, done = game.execute("export")
+print("Final state:", done)
+print("Final Grid:\n", grid)
 
 ########################################
 

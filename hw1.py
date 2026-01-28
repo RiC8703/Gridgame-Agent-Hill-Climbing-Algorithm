@@ -105,8 +105,8 @@ class Agent:
                         violations += 1
 
         # penalize violations and number of shapes used
-        score -= violations * 1000
-        score -= len(placedShapes) * 10
+        score -= violations * 500
+        score -= len(placedShapes) * 5
     
         return score
 

@@ -15,7 +15,7 @@ import random
 
 ##############################################################################################################################
 
-game = ShapePlacementGrid(GUI=True, render_delay_sec=0, gs=6, num_colored_boxes=5)
+game = ShapePlacementGrid(GUI=False, render_delay_sec=0.5, gs=6, num_colored_boxes=5)
 shapePos, currentShapeIndex, currentColorIndex, grid, placedShapes, done = game.execute('export')
 np.savetxt('initial_grid.txt', grid, fmt="%d")
 

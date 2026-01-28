@@ -105,8 +105,8 @@ class Agent:
                         violations += 1
 
         # penalize violations and number of shapes used
-        score -= violations * 500
-        score -= len(placedShapes) * 5
+        score -= violations * 1000
+        score -= len(placedShapes) * 10
     
         return score
 
@@ -165,8 +165,9 @@ class Agent:
 
     def solve(self):
         """
-        Implementation of local search algorithm.
-        Main solving function using first choice hill climbing with random restarts.
+        Implementation of First Choice Hill Climbing with Random Restarts.
+    
+        Algorithm:
         1. generate a random move. (position, shape, color)
         2. navigate to position, switch to shape and color.
         3. place the shape if possible.
